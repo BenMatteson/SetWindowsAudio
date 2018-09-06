@@ -1,24 +1,24 @@
-﻿#SingleInstance Force
+﻿;adapted code from tjmonk15 to use device names, mitigating changing audio device lists
+;https://autohotkey.com/board/topic/2306-changing-default-audio-device/page-4
+
+#SingleInstance Force
 #UseHook On
 #NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 
-#h:: selectAudioDevice(1, 1, true) ; headset
-#s:: selectAudioDevice(2, 2) ; Speakers
-;#b:: selectAudioDevice(-5, 2) ; aux out
+#h:: selectAudioDevice("G933", "G933", true) ; headset
+#s:: selectAudioDevice("Monitor", , true) ; Speakers
+;#b:: selectAudioDevice("Speakers") ; aux out
 
-; Usage: selectAudioDevice(Output, Input=0, Loud = false)
-;  Output - is desired output device where the first listed = 1
-;  Input  - is desired input device "                        "
-;  Loud   - if true, will cause alert sounds if device is already active, but run faster
-;			also disables pushing window to back, does not cooperate when closed too quickly
-;           Note: does not casue any sounds if device was not already active
+; Usage: selectAudioDevice(Output [, Input, Loud])
+;  Output - Name of the desired output device
+;  Input  - Name of the desired input device
+;  Loud   - if true, will play sound on new device to confirm it was set
 ;
-; negative numbers can be used to count up from the bottom where the last item = -1
-; values may be set to 0 to skip setting that device.
-; this may allow more reliability on systems where the available devices may change
+; The name of sound devices can be customized in the sound panel by selecting properties for the device
+; If a name appears more than once, the first will always be selected
 
-SelectAudioDevice(devicenumber, inputdevice := 0, loud := false)
+SelectAudioDevice(output, input := "", loud := false)
 {
 	WinGet, cur, ID, A ;save active window
 	
@@ -29,57 +29,43 @@ SelectAudioDevice(devicenumber, inputdevice := 0, loud := false)
 	winwait, ahk_class #32770
 	
 	WinActivate, ahk_id %cur% ;reactivate active window to minimize side effects
+	winset, bottom,, ahk_class #32770 ;Optional, still appears on open
 	
-	if(!loud)
-		winset, bottom,, ahk_class #32770 ;Optional, still appears on open
-		;this doesn't work well when closed too soon after called, so only quiet mode
-		
-	;sleep, 300 ;may improve reliability on slower systems, should not be needed
-	
-	if(devicenumber != 0) ;switch output if set
+	if(output <> "") ;switch output if set
 	{
-		SetDevice(devicenumber, loud)
+		SetDevice(output)
+		if(loud)
+			SoundPlay *-1
 	}
 	
-	if(inputdevice != 0) ;switch input if set
+	if(input <> "") ;switch input if set
 	{ 
 		KeyWait LWin ;windows key prevents changing tab for some reason, needs to be released
 		BlockInput On ;prevent new inputs while sending, may be overkill, but seems to prevents some fringe cases
 		controlsend,SysTabControl321, {ctrl down}{Tab}{ctrl up}, ahk_class #32770 ;next tab (inputs)
 		BlockInput Off 
 		
-		sleep, 100 ;doesn't always accept input right away, wait a bit
-		SetDevice(inputdevice, loud)
+		SetDevice(input)
 	}
 	
 	winclose, ahk_class #32770
 }
 
-SetDevice(num, loud)
+SetDevice(device)
 {
-	if(num >= 0) ;nth device counting down from top
+	ControlGet, len, List, Count, SysListView321, ahk_class #32770
+	Loop %len%
 	{
-		loop, %num%
+		controlsend, syslistview321, {down}, ahk_class #32770
+		
+		ControlGet, devices, List, Selected, SysListView321, ahk_class #32770
+		deviceInfo := strSplit(devices, A_Tab)
+		if(deviceInfo[1] = device)
 		{
-			controlsend, syslistview321, {down}, ahk_class #32770
+			shouldSet := deviceInfo[3] <> "Default Device"
+			if(shouldSet)
+				controlsend, Button2, {alt down}s{alt up}, ahk_class #32770
+			return
 		}
 	}
-	else ;-nth device counting up from bottom
-	{
-		controlsend, syslistview321, {end}, ahk_class #32770
-		num := (-num) - 1
-		loop, %num%
-		{
-			controlsend, syslistview321, {up}, ahk_class #32770
-		}
-	}
-	
-	if(!loud)
-	{
-		sleep, 300 ;wait for button state to update
-		ControlGet, shouldSet, Enabled,, Button2, ahk_class #32770
-	}
-	if(loud || shouldSet) ;prevents alerts if button disabled (already active device)
-		controlsend, Button2, {alt down}s{alt up}, ahk_class #32770
-	;sleep, 300 ;pause to see the selected output
 }

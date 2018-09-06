@@ -2,8 +2,10 @@ SetWindowsAudio is a simple AHK Script that adds hotkey support for setting audi
 
 requires AutoHotkey software available here: https://www.autohotkey.com/
 
-Set the desired hotkeys or use the defaults, and set the device numbers you want to select.
+Set the desired hotkeys or use the defaults, and set the name(s) of the device(s) you want to select.
+Device names can be customized in the properties window of the device.
+In the case of duplicate names, the first is always selected, so generic names like "Speakers" don't work well.
 
-To determine the device numbers, open the sound control panel by typing sound or mmsys.cpl in the start menu.
-Then counting from the top starting with 1, pick the device you want for each(or either) of output and input devices. 
-(you can also count from the bottom and enter it as a negative number, which may allow more reliable hotkeys if your lsit of devices is prone to change)
+#####Known issues:
+- Input device selection is occasionally incorrect. (it is infrequent and unknown what causes this)
+  - repeating the hotkey will select the correct device.
