@@ -6,6 +6,6 @@ Set the desired hotkeys or use the defaults, and set the name(s) of the device(s
 Device names can be customized in the properties window of the device.
 In the case of duplicate names, the first is always selected, so generic names like "Speakers" don't work well.
 
-#####Known issues:
+#### Known issues:
 - Input device selection is occasionally incorrect. (it is infrequent and unknown what causes this)
   - repeating the hotkey will select the correct device.
