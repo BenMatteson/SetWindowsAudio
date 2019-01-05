@@ -10,15 +10,15 @@ SendMode Input  ; Recommended for new scripts due to its superior speed and reli
 #s:: selectAudioDevice("Monitor", , true) ; Speakers
 ;#b:: selectAudioDevice("Speakers") ; aux out
 
-; Usage: selectAudioDevice(Output [, Input, Loud])
+; Usage: selectAudioDevice([Output, Input, Notify])
 ;  Output - Name of the desired output device
 ;  Input  - Name of the desired input device
-;  Loud   - if true, will play sound on new device to confirm it was set
+;  Notify   - if true, will play sound on new device to confirm it was set
 ;
 ; The name of sound devices can be customized in the sound panel by selecting properties for the device
 ; If a name appears more than once, the first will always be selected
 
-SelectAudioDevice(output, input := "", loud := false)
+SelectAudioDevice(output := "", input := "", notify := false)
 {
 	WinGet, cur, ID, A ;save active window
 	
@@ -34,8 +34,6 @@ SelectAudioDevice(output, input := "", loud := false)
 	if(output <> "") ;switch output if set
 	{
 		SetDevice(output)
-		if(loud)
-			SoundPlay *-1
 	}
 	
 	if(input <> "") ;switch input if set
@@ -44,11 +42,14 @@ SelectAudioDevice(output, input := "", loud := false)
 		BlockInput On ;prevent new inputs while sending, may be overkill, but seems to prevents some fringe cases
 		controlsend,SysTabControl321, {ctrl down}{Tab}{ctrl up}, ahk_class #32770 ;next tab (inputs)
 		BlockInput Off 
-		
+		sleep, 200 ;workaround for windows clearing selection a moment after switching to tab
 		SetDevice(input)
 	}
 	
 	winclose, ahk_class #32770
+	
+	if(notify)
+			SoundPlay *-1
 }
 
 SetDevice(device)
